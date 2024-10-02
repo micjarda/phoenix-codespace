@@ -31,6 +31,10 @@ config :ylapi, YlapiWeb.Endpoint,
 # at the `config/runtime.exs`.
 config :ylapi, Ylapi.Mailer, adapter: Swoosh.Adapters.Local
 
+config :ylapi, Ylapi.Guardian,
+  issuer: "ylapi",
+  secret_key: "nějaký_silný_tajný_klíč"
+
 # Configure esbuild (the version is required)
 config :esbuild,
   version: "0.17.11",

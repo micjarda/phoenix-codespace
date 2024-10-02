@@ -32,6 +32,7 @@ defmodule Ylapi.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:guardian, "~> 2.0"},
       {:bcrypt_elixir, "~> 3.0"},
       {:phoenix, "~> 1.7.14"},
       {:phoenix_ecto, "~> 4.5"},

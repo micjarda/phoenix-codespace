@@ -17,6 +17,30 @@ defmodule YlapiWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :api_auth do
+    plug YlapiWeb.AuthPipeline
+  end
+
+  # scope "/api", YlapiWeb do
+  #   pipe_through [:api, :api_auth]
+
+  #   post "/login", SessionController, :create
+
+  #   get "/profile", ProfileController, :show
+  # end
+
+  scope "/api", YlapiWeb do
+    pipe_through [:api]  # Pouze :api, bez :api_auth pro login
+
+    post "/login", SessionController, :create  # Umožněte přihlášení bez ověřování tokenu
+  end
+
+  scope "/api", YlapiWeb do
+    pipe_through [:api, :api_auth]  # Pro všechny chráněné cesty bude nutné mít JWT token
+
+    get "/profile", ProfileController, :show
+  end
+
   scope "/", YlapiWeb do
     pipe_through :browser
     # pipe_through [:browser, :require_authenticated_user]

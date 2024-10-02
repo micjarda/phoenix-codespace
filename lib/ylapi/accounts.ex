@@ -350,4 +350,24 @@ defmodule Ylapi.Accounts do
       {:error, :user, changeset, _} -> {:error, changeset}
     end
   end
+
+  @doc """
+  Authenticate the user password.
+  # Funkce pro ověření uživatele podle emailu a hesla
+  """
+  def authenticate_user(email, password) do
+    user = Repo.get_by(User, email: email)  # Hledáme uživatele podle emailu
+
+    case user do
+      nil ->
+        {:error, :invalid_credentials}  # Uživatel neexistuje
+      _ ->
+        # Ověření hesla pomocí Bcrypt.verify_pass
+        if Bcrypt.verify_pass(password, user.hashed_password) do
+          {:ok, user}  # Správné heslo
+        else
+          {:error, :invalid_credentials}  # Nesprávné heslo
+        end
+    end
+  end
 end

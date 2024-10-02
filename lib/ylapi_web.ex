@@ -27,6 +27,7 @@ defmodule YlapiWeb do
       import Plug.Conn
       import Phoenix.Controller
       import Phoenix.LiveView.Router
+      alias YlapiWeb.AuthPipeline
     end
   end
 
