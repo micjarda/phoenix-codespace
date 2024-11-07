@@ -25,12 +25,24 @@ defmodule YlapiWeb.UserAuth do
   disconnected on log out. The line can be safely removed
   if you are not using LiveView.
   """
+  # def log_in_user(conn, user, params \\ %{}) do
+  #   token = Accounts.generate_user_session_token(user)
+  #   user_return_to = get_session(conn, :user_return_to)
+
+  #   conn
+  #   |> renew_session()
+  #   |> put_token_in_session(token)
+  #   |> maybe_write_remember_me_cookie(token, params)
+  #   |> redirect(to: user_return_to || signed_in_path(conn))
+  # end
+
   def log_in_user(conn, user, params \\ %{}) do
     token = Accounts.generate_user_session_token(user)
     user_return_to = get_session(conn, :user_return_to)
 
     conn
     |> renew_session()
+    |> put_session(:user_id, user.id)  # Uložení ID uživatele do session
     |> put_token_in_session(token)
     |> maybe_write_remember_me_cookie(token, params)
     |> redirect(to: user_return_to || signed_in_path(conn))
@@ -90,25 +102,65 @@ defmodule YlapiWeb.UserAuth do
   Authenticates the user by looking into the session
   and remember me token.
   """
-  def fetch_current_user(conn, _opts) do
-    {user_token, conn} = ensure_user_token(conn)
-    user = user_token && Accounts.get_user_by_session_token(user_token)
+  # def fetch_current_user(conn, _opts) do
+  #   {user_token, conn} = ensure_user_token(conn)
+  #   user = user_token && Accounts.get_user_by_session_token(user_token)
+  #   assign(conn, :current_user, user)
+  # end
+
+  # This function retrieves the current user from the session
+  # def fetch_current_user(conn, _opts) do
+  #   {user_token, conn} = ensure_user_token(conn)
+  #   user = user_token && Accounts.get_user_by_session_token(user_token)
+  #   assign(conn, :current_user, user)
+  # end
+
+  # defp ensure_user_token(conn) do
+  #   if token = get_session(conn, :user_token) do
+  #     {token, conn}
+  #   else
+  #     conn = fetch_cookies(conn, signed: [@remember_me_cookie])
+
+  #     if token = conn.cookies[@remember_me_cookie] do
+  #       {token, put_token_in_session(conn, token)}
+  #     else
+  #       {nil, conn}
+  #     end
+  #   end
+  # end
+
+  # def fetch_current_user(conn, _params) do
+  #   user_id = get_session(conn, :user_id)  # Získání ID uživatele ze session
+  #   user = Accounts.get_user(user_id)       # Načtení uživatele podle ID
+  #   IO.inspect(user, label: "Fetched User")
+  #   user
+  # end
+
+
+  # def fetch_current_user(conn, _params) do
+  #   user_id = get_session(conn, :user_id)
+  #   IO.inspect(user_id, label: "User ID from session")  # Debug výpis ID uživatele
+  #   user = Accounts.get_user(user_id)
+  #   IO.inspect(user, label: "Fetched User")
+  #   user
+  # end
+
+
+  def fetch_current_user(conn, _params) do
+    user_id = get_session(conn, :user_id)  # Získání ID uživatele ze session
+    user = if user_id do
+      Accounts.get_user(user_id)  # Načtení uživatele podle ID
+    else
+      nil  # Pokud je user_id nil, vrátí nil
+    end
+
+    IO.inspect(user, label: "Fetched User")
+
+    # Uložení uživatele do assigns, aby byl dostupný v kontrolerech
     assign(conn, :current_user, user)
   end
 
-  defp ensure_user_token(conn) do
-    if token = get_session(conn, :user_token) do
-      {token, conn}
-    else
-      conn = fetch_cookies(conn, signed: [@remember_me_cookie])
 
-      if token = conn.cookies[@remember_me_cookie] do
-        {token, put_token_in_session(conn, token)}
-      else
-        {nil, conn}
-      end
-    end
-  end
 
   @doc """
   Handles mounting and authenticating the current_user in LiveViews.

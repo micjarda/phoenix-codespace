@@ -10,7 +10,7 @@ defmodule YlapiWeb.Router do
     plug :put_root_layout, html: {YlapiWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
-    plug :fetch_current_user
+    plug :fetch_current_user  # Fetch current user from session
   end
 
   pipeline :api do
@@ -18,66 +18,37 @@ defmodule YlapiWeb.Router do
   end
 
   pipeline :api_auth do
-    plug YlapiWeb.AuthPipeline
+    plug YlapiWeb.AuthPipeline  # Guardian pipeline for API authentication
   end
 
-  # scope "/api", YlapiWeb do
-  #   pipe_through [:api, :api_auth]
-
-  #   post "/login", SessionController, :create
-
-  #   get "/profile", ProfileController, :show
-  # end
-
+  # Unauthenticated API route (login)
   scope "/api", YlapiWeb do
-    pipe_through [:api]  # Pouze :api, bez :api_auth pro login
-
-    post "/login", SessionController, :create  # Umožněte přihlášení bez ověřování tokenu
+    pipe_through [:api]
+    post "/login", SessionController, :create  # Login route
   end
 
+  # Authenticated API route
   scope "/api", YlapiWeb do
-    pipe_through [:api, :api_auth]  # Pro všechny chráněné cesty bude nutné mít JWT token
-
-    get "/profile", ProfileController, :show
+    pipe_through [:api, :api_auth]  # Requires authentication for profile
+    get "/profile", ProfileController, :show  # Example authenticated route
   end
 
+  # Public routes (accessible without authentication)
   scope "/", YlapiWeb do
     pipe_through :browser
-    # pipe_through [:browser, :require_authenticated_user]
-
     get "/", PageController, :home
   end
 
-    scope "/", YlapiWeb do
-    pipe_through [:browser, :require_authenticated_user]
+  # Protected routes (require authenticated user based on session)
+  scope "/", YlapiWeb do
+    pipe_through [:browser, :require_authenticated_user]  # Session-based authentication
 
-    resources "/tasks", TaskController
+    resources "/tasks", TaskController  # Task routes using session-based auth
+    get "/tokens", TokenController, :index  # View tokens
+    delete "/tokens/:id/revoke", TokenController, :revoke  # Revoke token
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", YlapiWeb do
-  #   pipe_through :api
-  # end
-
-  # Enable LiveDashboard and Swoosh mailbox preview in development
-  if Application.compile_env(:ylapi, :dev_routes) do
-    # If you want to use the LiveDashboard in production, you should put
-    # it behind authentication and allow only admins to access it.
-    # If your application does not have an admins-only section yet,
-    # you can use Plug.BasicAuth to set up some basic authentication
-    # as long as you are also using SSL (which you should anyway).
-    import Phoenix.LiveDashboard.Router
-
-    scope "/dev" do
-      pipe_through :browser
-
-      live_dashboard "/dashboard", metrics: YlapiWeb.Telemetry
-      forward "/mailbox", Plug.Swoosh.MailboxPreview
-    end
-  end
-
-  ## Authentication routes
-
+  ## Authentication routes (login, registration)
   scope "/", YlapiWeb do
     pipe_through [:browser, :redirect_if_user_is_authenticated]
 
@@ -104,13 +75,23 @@ defmodule YlapiWeb.Router do
 
   scope "/", YlapiWeb do
     pipe_through [:browser]
-
     delete "/users/log_out", UserSessionController, :delete
 
     live_session :current_user,
       on_mount: [{YlapiWeb.UserAuth, :mount_current_user}] do
       live "/users/confirm/:token", UserConfirmationLive, :edit
       live "/users/confirm", UserConfirmationInstructionsLive, :new
+    end
+  end
+
+  # Enable LiveDashboard and Swoosh mailbox preview in development
+  if Application.compile_env(:ylapi, :dev_routes) do
+    import Phoenix.LiveDashboard.Router
+
+    scope "/dev" do
+      pipe_through :browser
+      live_dashboard "/dashboard", metrics: YlapiWeb.Telemetry
+      forward "/mailbox", Plug.Swoosh.MailboxPreview
     end
   end
 end

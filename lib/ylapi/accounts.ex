@@ -6,7 +6,7 @@ defmodule Ylapi.Accounts do
   import Ecto.Query, warn: false
   alias Ylapi.Repo
 
-  alias Ylapi.Accounts.{User, UserToken, UserNotifier}
+  alias Ylapi.Accounts.{User, UserToken, UserNotifier, UserApiToken}
 
   ## Database getters
 
@@ -369,5 +369,35 @@ defmodule Ylapi.Accounts do
           {:error, :invalid_credentials}  # Nesprávné heslo
         end
     end
+  end
+
+  # Funkce pro vytvoření API tokenu
+  def create_api_token(attrs \\ %{}) do
+    %UserApiToken{}
+    |> UserApiToken.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  # Funkce pro načtení všech API tokenů uživatele
+  def list_user_api_tokens(user_id) do
+    Repo.all(from t in UserApiToken, where: t.user_id == ^user_id and is_nil(t.revoked_at))
+  end
+
+  # Funkce pro zneplatnění API tokenu
+  def revoke_api_token(user, token_id) do
+    token = Repo.get_by(UserApiToken, id: token_id, user_id: user.id)
+
+    case token do
+      nil ->
+        {:error, :not_found}
+      _ ->
+        token
+        |> Ecto.Changeset.change(revoked_at: DateTime.utc_now())
+        |> Repo.update()
+    end
+  end
+
+  def get_user(id) do
+    Repo.get(User, id)  # Načtení uživatele podle ID
   end
 end
