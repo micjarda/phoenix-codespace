@@ -1,4 +1,10 @@
+<.header>
+  Listing Tokens
+</.header>
 
 <.table id="tokens" rows={@tokens}>
-  <:col :let={tokens} label="Name"><%= tokens.token %></:col>
+  <:col :let={tokens} label="Name"><%= tokens.id %></:col>
+  <:action :let={tokens}>
+    <.link navigate={~p"/tokens/#{tokens.id}/revoke"}>Revoke</.link>
+  </:action>
 </.table>

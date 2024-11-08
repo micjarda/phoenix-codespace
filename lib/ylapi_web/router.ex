@@ -45,7 +45,7 @@ defmodule YlapiWeb.Router do
 
     resources "/tasks", TaskController  # Task routes using session-based auth
     get "/tokens", TokenController, :index  # View tokens
-    delete "/tokens/:id/revoke", TokenController, :revoke  # Revoke token
+    get "/tokens/:id/revoke", TokenController, :revoke  # Revoke token
   end
 
   ## Authentication routes (login, registration)

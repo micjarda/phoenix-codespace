@@ -23,22 +23,29 @@ defmodule YlapiWeb.TokenController do
     end
   end
   def revoke(conn, %{"id" => token_id}) do
-    # Získání aktuálně přihlášeného uživatele
-    user = Guardian.Plug.current_resource(conn)
+    # Předpokládáme, že uživatel je uložen v conn.assigns[:current_user]
+    user = conn.assigns[:current_user]
 
-    # Zneplatnění tokenu
-    case Accounts.revoke_api_token(user, token_id) do
-      {:ok, _token} ->
-        # Pokud byl token úspěšně zneplatněn, zobrazí zprávu
-        conn
-        |> put_flash(:info, "Token was successfully revoked.")
-        |> redirect(to: ~p"/tokens")
+    IO.inspect(user, label: "User")
+    IO.inspect(token_id, label: "Token ID")
 
-      {:error, _reason} ->
-        # Pokud se nepodařilo zneplatnit token, zobrazí chybu
-        conn
-        |> put_flash(:error, "Unable to revoke token.")
-        |> redirect(to: ~p"/tokens")
+    if user do
+      # Zneplatnění tokenu
+      case Accounts.revoke_api_token(user, token_id) do
+        {:ok, _token} ->
+          conn
+          |> put_flash(:info, "Token was successfully revoked.")
+          |> redirect(to: ~p"/tokens")
+
+        {:error, _reason} ->
+          conn
+          |> put_flash(:error, "Unable to revoke token.")
+          |> redirect(to: ~p"/tokens")
+      end
+    else
+      conn
+      |> put_flash(:error, "User not authenticated.")
+      |> redirect(to: ~p"/login")
     end
   end
 end

@@ -388,11 +388,10 @@ defmodule Ylapi.Accounts do
     token = Repo.get_by(UserApiToken, id: token_id, user_id: user.id)
 
     case token do
-      nil ->
-        {:error, :not_found}
+      nil -> {:error, :not_found}
       _ ->
         token
-        |> Ecto.Changeset.change(revoked_at: DateTime.utc_now())
+        |> Ecto.Changeset.change(revoked_at: DateTime.utc_now() |> DateTime.truncate(:second))
         |> Repo.update()
     end
   end
