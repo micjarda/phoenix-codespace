@@ -4,6 +4,7 @@ defmodule Ylapi.Accounts.UserApiToken do
 
   schema "user_api_tokens" do
     field :token, :string
+    field :app_name, :string
     field :expires_at, :utc_datetime
     field :revoked_at, :utc_datetime
     belongs_to :user, Ylapi.Accounts.User
@@ -11,11 +12,9 @@ defmodule Ylapi.Accounts.UserApiToken do
     timestamps()
   end
 
-  @doc false
   def changeset(token, attrs) do
     token
-    |> cast(attrs, [:token, :expires_at, :revoked_at, :user_id])
-    |> validate_required([:token, :expires_at, :user_id])
-    |> unique_constraint(:token)
+    |> cast(attrs, [:token, :app_name, :expires_at, :revoked_at, :user_id])
+    |> validate_required([:token, :app_name, :expires_at, :user_id])
   end
 end
