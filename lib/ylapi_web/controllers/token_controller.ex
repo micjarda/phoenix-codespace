@@ -4,39 +4,21 @@ defmodule YlapiWeb.TokenController do
   alias Ylapi.Accounts
   alias Ylapi.Accounts.UserApiToken
   alias Ylapi.Repo
+  alias Phoenix.PubSub  # Přidáme PubSub alias
 
   import Ecto.Query
-  # def index(conn, _params) do
-  #   user_id = get_session(conn, :user_id)  # Získání uživatelského ID ze session
 
-  #   user = case user_id do
-  #     nil -> nil  # Pokud není uživatel přihlášen
-  #     _ -> Accounts.get_user!(user_id)  # Načtení uživatele podle ID
-  #   end
-
-  #   if user do
-  #     # Uživatel je autentizován, načtěte tokeny a renderujte dashboard
-  #     tokens = Accounts.list_user_api_tokens(user.id)
-  #     # tokens = Repo.all(from t in UserApiToken, select: %{id: t.id, token: t.token, app_name: t.app_name})
-  #     render(conn, "index.html", tokens: tokens)
-  #   else
-  #     # Uživatel není autentizován, přesměrování
-  #     conn
-  #     |> put_flash(:error, "User not found or not authenticated.")
-  #     |> redirect(to: "/")
-  #   end
-  # end
+  @pubsub_topic "tokens"
 
   def index(conn, _params) do
     user_id = get_session(conn, :user_id)  # Získání uživatelského ID ze session
 
     user = case user_id do
-      nil -> nil  # Pokud není uživatel přihlášen
-      _ -> Accounts.get_user!(user_id)  # Načtení uživatele podle ID
+      nil -> nil
+      _ -> Accounts.get_user!(user_id)
     end
 
     if user do
-      # Uživatel je autentizován, načtěte tokeny a renderujte dashboard
       tokens = Repo.all(
         from t in UserApiToken,
         where: t.user_id == ^user.id,
@@ -44,38 +26,59 @@ defmodule YlapiWeb.TokenController do
       )
       render(conn, "index.html", tokens: tokens)
     else
-      # Uživatel není autentizován, přesměrování
       conn
       |> put_flash(:error, "User not found or not authenticated.")
       |> redirect(to: "/")
     end
   end
 
-
   def revoke(conn, %{"id" => token_id}) do
-    # Předpokládáme, že uživatel je uložen v conn.assigns[:current_user]
     user = conn.assigns[:current_user]
 
-    IO.inspect(user, label: "User")
-    IO.inspect(token_id, label: "Token ID")
-
     if user do
-      # Zneplatnění tokenu
       case Accounts.revoke_api_token(user, token_id) do
-        {:ok, _token} ->
+        {:ok, token} ->
+          # 🔥 Odeslání zprávy do PubSub při revokaci tokenu
+          PubSub.broadcast(Ylapi.PubSub, @pubsub_topic, {:token_revoked, token.id})
+
           conn
           |> put_flash(:info, "Token was successfully revoked.")
-          |> redirect(to: ~p"/tokens")
+          |> redirect(to: ~p"/users/api/tokens")
 
         {:error, _reason} ->
           conn
           |> put_flash(:error, "Unable to revoke token.")
-          |> redirect(to: ~p"/tokens")
+          |> redirect(to: ~p"/users/api/tokens")
       end
     else
       conn
       |> put_flash(:error, "User not authenticated.")
-      |> redirect(to: ~p"/login")
+      |> redirect(to: ~p"/api/login")
+    end
+  end
+
+  def create(conn, %{"token" => token_params}) do
+    user = conn.assigns[:current_user]
+
+    if user do
+      case Accounts.create_api_token(token_params) do
+        {:ok, token} ->
+          # 🔥 Odeslání zprávy do PubSub při vytvoření tokenu
+          PubSub.broadcast(Ylapi.PubSub, @pubsub_topic, {:token_created, token.id})
+
+          conn
+          |> put_flash(:info, "Token successfully created.")
+          |> redirect(to: ~p"/users/api/tokens")
+
+        {:error, _changeset} ->
+          conn
+          |> put_flash(:error, "Failed to create token.")
+          |> redirect(to: ~p"/users/api/tokens")
+      end
+    else
+      conn
+      |> put_flash(:error, "User not authenticated.")
+      |> redirect(to: ~p"/api/login")
     end
   end
 end

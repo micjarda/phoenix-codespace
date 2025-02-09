@@ -1,0 +1,16 @@
+<h1>Tokens for Application: <%= @app_name %></h1>
+
+<ul>
+  <%= for token <- @tokens do %>
+    <li>
+      Token: <%= token.token %> 
+      (Expires: <%= token.expires_at %>)
+      <form action={~p"/dashboard/apps/#{@app_name}/tokens/#{token.id}"} method="post">
+        <input type="hidden" name="_method" value="delete">
+        <button>Revoke</button>
+      </form>
+    </li>
+  <% end %>
+</ul>
+
+<a href={~p"/dashboard/apps"}>Back to Applications</a>

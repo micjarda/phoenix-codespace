@@ -1,0 +1,10 @@
+<h1>Your Applications</h1>
+
+<ul>
+  <%= for app <- @apps do %>
+    <li>
+      <strong><%= app.app_name %></strong>
+      <a href={~p"/dashboard/apps/#{app.app_name}"}>View Tokens</a>
+    </li>
+  <% end %>
+</ul>
