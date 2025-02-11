@@ -391,6 +391,18 @@ defmodule Ylapi.Accounts do
     Repo.all(from t in UserApiToken, where: t.user_id == ^user_id and is_nil(t.revoked_at))
   end
 
+  def revoke_api_token(app_name) do
+    token = Repo.get_by(UserApiToken, app_name: app_name)
+
+    case token do
+      nil -> {:error, :not_found}
+      _ ->
+        token
+        |> Ecto.Changeset.change(revoked_at: DateTime.utc_now() |> DateTime.truncate(:second))
+        |> Repo.update()
+    end
+  end
+
   # Funkce pro zneplatnění API tokenu
   def revoke_api_token(user, token_id) do
     token = Repo.get_by(UserApiToken, id: token_id, user_id: user.id)
