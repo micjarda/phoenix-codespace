@@ -373,10 +373,18 @@ defmodule Ylapi.Accounts do
 
   # Funkce pro vytvoření API tokenu
   def create_api_token(attrs \\ %{}) do
-    %UserApiToken{}
-    |> UserApiToken.changeset(attrs)
-    |> Repo.insert()
+    changeset = UserApiToken.changeset(%UserApiToken{}, attrs)
+
+    case Repo.insert(changeset) do
+      {:ok, token} ->
+        Phoenix.PubSub.broadcast(Ylapi.PubSub, "tokens", {:new_token, token})  # ✅ Posíláme event!
+        {:ok, token}
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
   end
+
 
   # Funkce pro načtení všech API tokenů uživatele
   def list_user_api_tokens(user_id) do

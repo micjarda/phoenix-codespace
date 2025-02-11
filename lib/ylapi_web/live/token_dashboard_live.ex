@@ -1,42 +1,33 @@
 defmodule YlapiWeb.TokenDashboardLive do
-  use YlapiWeb, :live_view
+  use Phoenix.LiveView
+  import YlapiWeb.TokenDashboardRenderer
 
-  alias Ylapi.Accounts
-  alias Phoenix.PubSub
+  alias Ylapi.Repo
+  alias Ylapi.Accounts.UserApiToken
+  alias Phoenix.PubSub  # 👈 Přidáváme PubSub pro real-time aktualizace
+
+  @topic "tokens"
 
   @impl true
-  def mount(_params, %{"user_id" => user_id} = _session, socket) do
+  def mount(_params, _session, socket) do
     if connected?(socket) do
-      # Přihlášení k odběru kanálu
-      PubSub.subscribe(Ylapi.PubSub, "user_tokens:#{user_id}")
+      PubSub.subscribe(Ylapi.PubSub, @topic)  # ✅ Přihlásíme se k tématu "tokens"
     end
 
-    tokens = Accounts.list_user_api_tokens(user_id)
-    {:ok, assign(socket, tokens: tokens, user_id: user_id)}
+    tokens = Repo.all(UserApiToken)
+    {:ok, assign(socket, tokens: tokens)}
   end
 
   @impl true
-  def handle_info({:new_token, token_data}, socket) do
-    # Přidání nového tokenu do seznamu
-    new_tokens = [token_data | socket.assigns.tokens]
-    {:noreply, assign(socket, tokens: new_tokens)}
+  def handle_info({:new_token, _token_data}, socket) do
+    tokens = Repo.all(UserApiToken)  # ✅ Načteme nejnovější tokeny
+    {:noreply, assign(socket, tokens: tokens)}
   end
 
   @impl true
   def render(assigns) do
     ~H"""
-    <div>
-      <h1>Token Dashboard</h1>
-      <ul>
-        <%= for token <- @tokens do %>
-          <li>
-            <strong>ID:</strong> <%= token.id %> <br>
-            <strong>Token:</strong> <%= token.token %> <br>
-            <strong>App Name:</strong> <%= token.app_name %>
-          </li>
-        <% end %>
-      </ul>
-    </div>
+    <.token_dashboard_renderer tokens={@tokens} />
     """
   end
 end
