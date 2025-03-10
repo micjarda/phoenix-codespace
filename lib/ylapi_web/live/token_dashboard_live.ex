@@ -1,9 +1,8 @@
 defmodule YlapiWeb.TokenDashboardLive do
   use Phoenix.LiveView
-  import Ecto.Query  # ✅ Nutné pro `from/2`
-  import YlapiWeb.TokenDashboardRenderer
-  import YlapiWeb.InfoCard
 
+  import Ecto.Query
+  import YlapiWeb.InfoCard
   alias Ylapi.Repo
   alias Ylapi.Accounts.UserApiToken
   alias Phoenix.PubSub
@@ -11,32 +10,39 @@ defmodule YlapiWeb.TokenDashboardLive do
   @topic "tokens"
 
   @impl true
+  @spec mount(any(), nil | maybe_improper_list() | map(), Phoenix.LiveView.Socket.t()) ::
+          {:ok, any()}
   def mount(_params, session, socket) do
     user_id = session["user_id"]
     user = Repo.get(Ylapi.Accounts.User, user_id)
 
     tokens = Repo.all(from t in UserApiToken, where: is_nil(t.revoked_at))  # ✅ Pouze aktivní tokeny
 
-    if connected?(socket), do: PubSub.subscribe(Ylapi.PubSub, @topic)  # ✅ Přihlášení k PubSub
+    if connected?(socket), do: PubSub.subscribe(Ylapi.PubSub, @topic)
 
     {:ok, assign(socket, tokens: tokens, current_user: user)}
   end
 
   @impl true
-  def handle_info({:token_revoked, token_id}, socket) do
-    new_tokens = Enum.filter(socket.assigns.tokens, fn t -> t.id != token_id end)  # ✅ Odebrání tokenu
-    {:noreply, assign(socket, tokens: new_tokens)}
+  def handle_info({:new_token, _token_data}, socket) do
+    tokens = Repo.all(from t in UserApiToken, where: is_nil(t.revoked_at))  # ✅ Načítání pouze aktivních tokenů
+    {:noreply, assign(socket, tokens: tokens)}
+  end
+
+  @impl true
+  def handle_event("copy", %{"token" => token}, socket) do
+    {:noreply, push_event(socket, "clipboard:copy", %{text: token})}
   end
 
   @impl true
   def handle_event("revoke_token", %{"token_id" => token_id_str}, socket) do
-    user = socket.assigns.current_user  # Přihlášený uživatel
-    token_id = String.to_integer(token_id_str)  # Převod token_id na číslo
+    user = socket.assigns.current_user
+    token_id = String.to_integer(token_id_str)
 
     case Ylapi.Accounts.revoke_api_token(user, token_id) do
       {:ok, _} ->
-        PubSub.broadcast(Ylapi.PubSub, @topic, {:token_revoked, token_id})  # ✅ Publikování změny
-        {:noreply, socket}
+        tokens = Repo.all(from t in UserApiToken, where: is_nil(t.revoked_at))
+        {:noreply, assign(socket, tokens: tokens)}
 
       {:error, _} ->
         {:noreply, socket}
