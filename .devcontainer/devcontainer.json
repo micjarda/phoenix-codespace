@@ -13,30 +13,32 @@
 	"remoteEnv": {
 	  "TS_AUTH_KEY": "${{ secrets.TS_AUTH_KEY }}"
 	},
+	"postStartCommand": "sudo tailscale up --authkey=$TS_AUTH_KEY --hostname=ylapi-codespace",
   
-	"postStartCommand": "sudo tailscale up --authkey=$TS_AUTH_KEY --hostname=yardalab-codespace --accept-dns=true --accept-routes",
-  
-	"settings": {
-	  "terminal.integrated.defaultProfile.linux": "bash",
-	  "sqltools.connections": [
-		{
-		  "name": "Raspberry Pi DB",
-		  "driver": "PostgreSQL",
-		  "previewLimit": 50,
-		  "server": "raspberrypi.tailnet-name.ts.net",
-		  "port": 5432,
-		  "database": "postgres",
-		  "username": "postgres",
-		  "password": "postgres"
-		}
-	  ]
-	},
-  
-	"extensions": [
-	  "dbaeumer.vscode-eslint",
-	  "mtxr.sqltools",
-	  "mtxr.sqltools-driver-pg",
-	  "jakebecker.elixir-ls"
-	]
+	"customizations": {
+	  "vscode": {
+		"settings": {
+		  "terminal.integrated.defaultProfile.linux": "bash",
+		  "sqltools.connections": [
+			{
+			  "name": "Raspberry Pi DB",
+			  "driver": "PostgreSQL",
+			  "previewLimit": 50,
+			  "server": "raspberrypi.tailnet-name.ts.net",
+			  "port": 5432,
+			  "database": "postgres",
+			  "username": "postgres",
+			  "password": "postgres"
+			}
+		  ]
+		},
+		"extensions": [
+		  "dbaeumer.vscode-eslint",
+		  "mtxr.sqltools",
+		  "mtxr.sqltools-driver-pg",
+		  "jakebecker.elixir-ls"
+		]
+	  }
+	}
   }
   

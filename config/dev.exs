@@ -1,14 +1,20 @@
 import Config
 
 # Configure your database
+# config :ylapi, Ylapi.Repo,
+#   username: "postgres",
+#   password: "postgres",
+#   hostname: "localhost",
+#   database: "ylapi_dev",
+#   stacktrace: true,
+#   show_sensitive_data_on_connection_error: true,
+#   pool_size: 10
+
 config :ylapi, Ylapi.Repo,
   username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  database: "ylapi_dev",
-  stacktrace: true,
-  show_sensitive_data_on_connection_error: true,
-  pool_size: 10
+  password: "xxx",
+  hostname: "100.100.33.21", # nebo localhost
+  database: "postgres"
 
 # For development, we disable any cache and enable
 # debugging and code reloading.

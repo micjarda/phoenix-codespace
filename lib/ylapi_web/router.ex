@@ -97,6 +97,12 @@ defmodule YlapiWeb.Router do
     end
   end
 
+  scope "/api", YlapiWeb do
+    pipe_through :api_auth
+
+    post "/agent/logs", AgentLogController, :create
+  end
+
   # 🔧 DEVELOPMENT TOOLS
   if Application.compile_env(:ylapi, :dev_routes) do
     import Phoenix.LiveDashboard.Router
