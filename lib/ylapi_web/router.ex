@@ -38,6 +38,19 @@ defmodule YlapiWeb.Router do
     post "/login", SessionController, :create
   end
 
+  scope "/api/auth", YlapiWeb do
+    pipe_through :api
+
+    post "/register", ApiAuthController, :register
+    post "/login", ApiAuthController, :login
+  end
+
+  scope "/api/auth", YlapiWeb do
+    pipe_through [:api_auth]
+
+    get "/me", ApiUserController, :me
+  end
+
   # 🔒 AUTHENTICATED API ROUTES
   scope "/users/api", YlapiWeb do
     pipe_through [:browser, :require_authenticated_user]  # Session-based authentication

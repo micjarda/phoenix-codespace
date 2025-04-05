@@ -52,6 +52,7 @@ defmodule YlapiWeb.TokenDashboardLive do
   @impl true
   def render(assigns) do
     ~H"""
+    <h1 class="text-center text-stone-50 bg-green-500 text-5xl rounded-xl m-5 p-2 font-mono">Tokens</h1>
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
       <%= for token <- @tokens do %>
         <.info_card

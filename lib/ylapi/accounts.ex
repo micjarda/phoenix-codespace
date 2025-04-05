@@ -6,7 +6,7 @@ defmodule Ylapi.Accounts do
   import Ecto.Query, warn: false
   alias Ylapi.Repo
 
-  alias Ylapi.Accounts.{User, UserToken, UserNotifier, UserApiToken}
+  alias Ylapi.Accounts.{User, UserToken, UserMetadata, UserNotifier, UserApiToken}
 
   ## Database getters
 
@@ -78,6 +78,32 @@ defmodule Ylapi.Accounts do
     %User{}
     |> User.registration_changeset(attrs)
     |> Repo.insert()
+  end
+
+  def register_user_with_metadata(attrs) do
+    case Repo.transaction(fn ->
+      with {:ok, user} <- register_user(%{
+             email: attrs["email"],
+             password: attrs["password"]
+           }) do
+        metadata =
+          %UserMetadata{}
+          |> UserMetadata.changeset(%{
+            nickname: attrs["nickname"],
+            source: attrs["source"]
+          })
+          |> Ecto.Changeset.put_assoc(:user, user)
+
+        case Repo.insert(metadata) do
+          {:ok, _meta} -> {:ok, user}
+          {:error, changeset} -> Repo.rollback(changeset)
+        end
+      end
+    end) do
+      {:ok, {:ok, user}} -> {:ok, user}
+      {:error, changeset} -> {:error, changeset}
+      {:ok, {:error, changeset}} -> {:error, changeset} # ← přidaný catch!
+    end
   end
 
   @doc """

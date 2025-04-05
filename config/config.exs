@@ -7,6 +7,10 @@
 # General application configuration
 import Config
 
+config :ylapi, YlapiWeb.Auth.Guardian,
+  issuer: "ylapi",
+  secret_key: System.get_env("WpuqT0maVBD8YSjub8qLfVc07E5eSp5g4IaBCfgTujUTOHB9FQgltOmKJVRJB2kk") || "dev_secret_key"
+
 config :ylapi,
   ecto_repos: [Ylapi.Repo],
   generators: [timestamp_type: :utc_datetime]
