@@ -1,5 +1,5 @@
 defmodule YlapiWeb.TokenDashboardLive do
-  use Phoenix.LiveView
+  use YlapiWeb, :live_view
 
   import Ecto.Query
   import YlapiWeb.InfoCard
@@ -20,7 +20,14 @@ defmodule YlapiWeb.TokenDashboardLive do
 
     if connected?(socket), do: PubSub.subscribe(Ylapi.PubSub, @topic)
 
-    {:ok, assign(socket, tokens: tokens, current_user: user)}
+    {:ok,
+    socket
+    |> assign(:tokens, tokens)
+    |> assign(:current_user, user)
+    |> assign(:breadcrumbs, [
+      {"Dashboard", "/dashboard/profile"},
+      {"Tokens", "/dashboard/tokens"}
+    ])}
   end
 
   @impl true
@@ -52,7 +59,6 @@ defmodule YlapiWeb.TokenDashboardLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <h1 class="text-center text-stone-50 bg-green-500 text-5xl rounded-xl m-5 p-2 font-mono">Tokens</h1>
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
       <%= for token <- @tokens do %>
         <.info_card

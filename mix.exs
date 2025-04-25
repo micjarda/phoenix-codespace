@@ -32,6 +32,7 @@ defmodule Ylapi.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:cors_plug, "~> 3.0"},
       {:phoenix_pubsub, "~> 2.0"},
       {:guardian, "~> 2.0"},
       {:bcrypt_elixir, "~> 3.0"},

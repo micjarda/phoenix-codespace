@@ -42,9 +42,10 @@ defmodule YlapiWeb.UserAuth do
 
     conn
     |> renew_session()
-    |> put_session(:user_id, user.id)  # Uložení ID uživatele do session
+    |> put_session(:user_id, user.id)
     |> put_token_in_session(token)
     |> maybe_write_remember_me_cookie(token, params)
+    |> put_resp_cookie("yl-login", "true", max_age: 5) # ✅ přidáme krátkodobou cookie
     |> redirect(to: user_return_to || signed_in_path(conn))
   end
 
@@ -260,7 +261,7 @@ defmodule YlapiWeb.UserAuth do
       conn
       |> put_flash(:error, "You must log in to access this page.")
       |> maybe_store_return_to()
-      |> redirect(to: ~p"/users/log_in")
+      |> redirect(to: ~p"/")
       |> halt()
     end
   end

@@ -57,4 +57,27 @@ defmodule YlapiWeb.ApiAuthController do
         |> json(%{error: "Invalid email or password"})
     end
   end
+
+  def login(conn, %{"username" => username, "password" => password, "app_name" => app_name}) do
+    case Accounts.authenticate_user(username, password) do
+      {:ok, user} ->
+        case Accounts.generate_user_api_token(user, app_name) do
+          {:ok, token} ->
+            conn
+            |> put_resp_cookie("yl_token", token, max_age: 60 * 60 * 24 * 30, http_only: true)
+            |> json(%{status: "ok", token: token, user_id: user.id})
+
+          {:error, reason} ->
+            conn
+            |> put_status(:internal_server_error)
+            |> json(%{error: "Could not generate token", reason: inspect(reason)})
+        end
+
+      {:error, reason} ->
+        conn
+        |> put_status(:unauthorized)
+        |> json(%{error: reason})
+    end
+  end
+
 end

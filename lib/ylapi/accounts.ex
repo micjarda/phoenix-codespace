@@ -445,4 +445,33 @@ defmodule Ylapi.Accounts do
   def get_user(id) do
     Repo.get(User, id)  # Načtení uživatele podle ID
   end
+
+  def list_active_tokens_for_user(user_id) do
+    from(t in Ylapi.Accounts.UserApiToken,
+      where: t.user_id == ^user_id and is_nil(t.revoked_at),
+      order_by: [desc: t.inserted_at]
+    )
+    |> Ylapi.Repo.all()
+  end
+
+  def generate_user_api_token(user, app_name) do
+    token = :crypto.strong_rand_bytes(32) |> Base.encode64()
+    expires_at =
+      DateTime.utc_now()
+      |> DateTime.add(60 * 60 * 24 * 30, :second)
+      |> DateTime.truncate(:second)
+
+    %Ylapi.Accounts.UserApiToken{}
+    |> Ecto.Changeset.change(%{
+      token: token,
+      app_name: app_name,
+      expires_at: expires_at,
+      user_id: user.id
+    })
+    |> Ylapi.Repo.insert()
+    |> case do
+      {:ok, _record} -> {:ok, token}
+      error -> error
+    end
+  end
 end

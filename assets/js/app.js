@@ -1,55 +1,59 @@
-// Pokud chceš použít Phoenix kanály, odkomentuj řádek níže
-// import "./user_socket.js"
-
-// Přidává phoenix_html pro podporu metod PUT/DELETE ve formulářích
+import "../css/app.css"
 import "phoenix_html"
-
-// Připojení k Phoenix LiveView
+import topbar from "../vendor/topbar"
 import { Socket } from "phoenix"
 import { LiveSocket } from "phoenix_live_view"
-import topbar from "../vendor/topbar"
 
-// ✅ Přidáváme hook pro kopírování do clipboardu
-let Hooks = {};
+let Hooks = {}
 
-Hooks.Clipboard = {
+// LogoutSync Hook
+Hooks.LogoutSync = {
   mounted() {
-    console.log("📋 Clipboard Hook Mounted!"); // ✅ Debug výpis
-    this.el.addEventListener("click", (event) => {
-      let text = this.el.getAttribute("phx-value-token"); // ✅ Opravený atribut
-      console.log("🖱️ Copy Button Clicked!", text); // ✅ Debug výpis
-
-      if (!text || text.trim() === "") {
-        console.error("⚠️ Kopírování selhalo: Žádný token nenalezen!");
-        return;
-      }
-
-      navigator.clipboard.writeText(text).then(() => {
-        console.log("✅ Token zkopírován:", text);
-        this.el.classList.add("copied");
-        setTimeout(() => this.el.classList.remove("copied"), 2000);
-      }).catch(err => console.error("❌ Kopírování selhalo:", err));
-    });
+    console.log("🔴 Logout hook triggered")
+    localStorage.setItem("yl-logout", Date.now())
   }
-};
+}
 
-// Načtení CSRF tokenu
-let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
+// LoginSync Hook
+Hooks.LoginSync = {
+  mounted() {
+    window.addEventListener("phx:login-sync", () => {
+      localStorage.setItem("yl-login", Date.now().toString())
+      console.log("📥 LoginSync triggered")
+    })
+  }
+}
 
-// Nastavení LiveView
-let liveSocket = new LiveSocket("/live", Socket, {
-  longPollFallbackMs: 2500,
-  params: { _csrf_token: csrfToken },
-  hooks: Hooks  // ✅ Přidání Clipboard hooku
+// Global tab sync (listen for changes)
+window.addEventListener("storage", (event) => {
+  if (event.key === "yl-logout") {
+    console.log("📤 Logout detected in another tab")
+    window.location.href = "/"
+  }
+
+  if (event.key === "yl-login") {
+    console.log("📥 Login detected in another tab")
+
+    const isLoginPage = ["/", "/users/log_in"].includes(window.location.pathname)
+
+    if (isLoginPage) {
+      window.location.reload()
+    }
+  }
 })
 
-// Zobrazení progress baru při načítání stránky
+// CSRF token
+let csrfToken = document.querySelector("meta[name='csrf-token']")?.getAttribute("content")
+
+let liveSocket = new LiveSocket("/live", Socket, {
+  params: { _csrf_token: csrfToken },
+  hooks: Hooks
+})
+
+// Topbar
 topbar.config({ barColors: { 0: "#29d" }, shadowColor: "rgba(0, 0, 0, .3)" })
-window.addEventListener("phx:page-loading-start", _info => topbar.show(300))
-window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
+window.addEventListener("phx:page-loading-start", () => topbar.show(300))
+window.addEventListener("phx:page-loading-stop", () => topbar.hide())
 
-// Připojení k LiveView, pokud je stránka aktivní
 liveSocket.connect()
-
-// Umožnění debugování v konzoli
 window.liveSocket = liveSocket

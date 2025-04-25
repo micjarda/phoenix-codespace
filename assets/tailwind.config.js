@@ -15,6 +15,8 @@ module.exports = {
     extend: {
       colors: {
         brand: "#FD4F00",
+        neon: '#00FF7F',
+        ylgreen: '#50ff41'
       }
     },
   },
