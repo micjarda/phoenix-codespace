@@ -95,6 +95,7 @@ defmodule YlapiWeb.Router do
     pipe_through :api
     post "/register", ApiAuthController, :register
     post "/login", ApiAuthController, :login
+    post "/logout", ApiAuthController, :logout
   end
 
   scope "/api/auth", YlapiWeb do

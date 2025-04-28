@@ -1,4 +1,3 @@
-import "../css/app.css"
 import "phoenix_html"
 import topbar from "../vendor/topbar"
 import { Socket } from "phoenix"

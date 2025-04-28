@@ -31,7 +31,6 @@ defmodule YlapiWeb.ApiAuthController do
     end
   end
 
-  # Překlad chybových hlášek do čitelné podoby
   defp translate_error({msg, opts}) do
     Enum.reduce(opts, msg, fn {key, value}, acc ->
       String.replace(acc, "%{#{key}}", to_string(value))
@@ -80,4 +79,23 @@ defmodule YlapiWeb.ApiAuthController do
     end
   end
 
+  def logout(conn, _) do
+    case get_req_header(conn, "authorization") do
+      ["Bearer " <> token] ->
+        case Ylapi.Accounts.get_user_api_token(token) do
+          nil ->
+            send_resp(conn, 401, "Invalid token")
+
+          %Ylapi.Accounts.UserApiToken{user_id: user_id} = token_record ->
+            # Revoke token
+            Ylapi.Accounts.revoke_api_token(token_record.token)
+            # Broadcast logout všem socketům toho uživatele
+            YlapiWeb.Endpoint.broadcast("user_session:#{user_id}", "logout", %{})
+            send_resp(conn, 200, "Logged out")
+        end
+
+      _ ->
+        send_resp(conn, 401, "Missing Authorization header")
+    end
+  end
 end

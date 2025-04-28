@@ -474,4 +474,18 @@ defmodule Ylapi.Accounts do
       error -> error
     end
   end
+
+  def get_user_id_from_token(token) do
+    alias Ylapi.Repo
+    alias Ylapi.Accounts.UserApiToken
+
+    case Repo.get_by(UserApiToken, token: token) do
+      nil -> nil
+      %UserApiToken{user_id: user_id} -> user_id
+    end
+  end
+
+  def get_user_api_token(token) do
+    Repo.get_by(UserApiToken, token: token)
+  end
 end
