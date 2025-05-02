@@ -10,16 +10,18 @@ defmodule Ylapi.Application do
     children = [
       YlapiWeb.Telemetry,
       Ylapi.Repo,
+      {Redix, name: :redix, host: "100.100.33.21", port: 6379},
       {DNSCluster, query: Application.get_env(:ylapi, :dns_cluster_query) || :ignore},
-      {Phoenix.PubSub, name: Ylapi.PubSub},
-      # Start the Finch HTTP client for sending emails
+      {Phoenix.PubSub,
+        name: Ylapi.PubSub,
+        adapter: Phoenix.PubSub.Redis,
+        host: "100.100.33.21",
+        port: 6379,
+        node_name: "ylapi@localhost"
+      },
       {Finch, name: Ylapi.Finch},
-      # Start a worker by calling: Ylapi.Worker.start_link(arg)
-      # {Ylapi.Worker, arg},
-      # Start to serve requests, typically the last entry
       YlapiWeb.Endpoint
     ]
-
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Ylapi.Supervisor]

@@ -5,51 +5,72 @@ import { LiveSocket } from "phoenix_live_view"
 
 let Hooks = {}
 
-// LogoutSync Hook
+// 🔊 Broadcast Channel init
+const bc = new BroadcastChannel("yl-sync")
+
+// 🟥 Logout Hook
 Hooks.LogoutSync = {
   mounted() {
     console.log("🔴 Logout hook triggered")
-    localStorage.setItem("yl-logout", Date.now())
+    bc.postMessage("logout")
   }
 }
 
-// LoginSync Hook
+// 🟦 LoginSync Hook
 Hooks.LoginSync = {
   mounted() {
-    window.addEventListener("phx:login-sync", () => {
-      localStorage.setItem("yl-login", Date.now().toString())
+    const alreadySent = sessionStorage.getItem("yl-login-sent")
+    const isLoggedIn = document.body.dataset.loggedIn === "true"
+
+    if (isLoggedIn && !alreadySent) {
+      bc.postMessage("login")
+      sessionStorage.setItem("yl-login-sent", "true")
       console.log("📥 LoginSync triggered")
-    })
+    }
   }
 }
 
-// Global tab sync (listen for changes)
-window.addEventListener("storage", (event) => {
-  if (event.key === "yl-logout") {
-    console.log("📤 Logout detected in another tab")
+// 🌐 Sync messages between tabs
+bc.onmessage = (event) => {
+  const msg = event.data
+  const path = window.location.pathname
+  const isLoggedIn = document.body.dataset.loggedIn === "true"
+
+  const isLoginPage = path === "/" || path === "/users/log_in"
+  const isDashboard = path.startsWith("/dashboard")
+  const redirected = sessionStorage.getItem("yl-login-redirected")
+
+  if (msg === "logout") {
+    console.log("📤 Logout received")
+    sessionStorage.removeItem("yl-login-sent")
+    sessionStorage.removeItem("yl-login-redirected")
     window.location.href = "/"
   }
 
-  if (event.key === "yl-login") {
-    console.log("📥 Login detected in another tab")
+  if (msg === "login") {
+    console.log("📥 Login received")
 
-    const isLoginPage = ["/", "/users/log_in"].includes(window.location.pathname)
+    if (isLoginPage && isLoggedIn && !redirected) {
+      console.log("➡️ Redirecting to dashboard")
+      sessionStorage.setItem("yl-login-redirected", "true")
+      window.location.href = "/dashboard"
+    }
 
-    if (isLoginPage) {
-      window.location.reload()
+    if (isDashboard && isLoggedIn) {
+      sessionStorage.removeItem("yl-login-redirected")
     }
   }
-})
+}
 
-// CSRF token
+// 🔐 CSRF token
 let csrfToken = document.querySelector("meta[name='csrf-token']")?.getAttribute("content")
 
 let liveSocket = new LiveSocket("/live", Socket, {
   params: { _csrf_token: csrfToken },
-  hooks: Hooks
+  hooks: Hooks,
 })
 
-// Topbar
+// ⏳ Topbar
 topbar.config({ barColors: { 0: "#29d" }, shadowColor: "rgba(0, 0, 0, .3)" })
 window.addEventListener("phx:page-loading-start", () => topbar.show(300))
 window.addEventListener("phx:page-loading-stop", () => topbar.hide())

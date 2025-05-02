@@ -13,4 +13,5 @@ defmodule YlapiWeb.PageController do
       |> render(:home, layout: false)
     end
   end
+
 end

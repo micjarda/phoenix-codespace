@@ -10,8 +10,8 @@
     <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}></script>
   </head>
-  <body data-logged-in={!!@current_user}
-  data-just-logged-in={Map.get(assigns, :just_logged_in, false)}>
+  <body data-logged-in={if @current_user, do: "true", else: "false"}
+        data-just-logged-in={Map.get(assigns, :just_logged_in, false)}>
     <%= unless Map.get(assigns, :hide_nav) do %>
       <ul class="relative z-10 flex items-center gap-4 px-4 sm:px-6 lg:px-8 justify-end bg-green-800">
         <%= if @current_user do %>
@@ -24,7 +24,10 @@
             </.link>
           </li>
           <li>
-            <.link method="delete" href={~p"/users/log_out"} data-phx-hook="LogoutSync">
+            <.link method="delete"
+                   href={~p"/users/log_out"}
+                   id="logout-sync-link"
+                   data-phx-hook="LogoutSync">
               Log out
             </.link>            
           </li>
