@@ -3,7 +3,7 @@ defmodule YlapiWeb.UserLoginLive do
 
   def render(assigns) do
     ~H"""
-    <div class="mx-auto max-w-sm">
+    <div id="login-sync" phx-hook="LoginSync" class="mx-auto max-w-sm">
       <.header class="text-center">
         Log in to account
         <:subtitle>
@@ -38,6 +38,16 @@ defmodule YlapiWeb.UserLoginLive do
   def mount(_params, _session, socket) do
     email = Phoenix.Flash.get(socket.assigns.flash, :email)
     form = to_form(%{"email" => email}, as: "user")
+
+    if socket.assigns[:current_user] do
+      send(self(), :trigger_login_event)
+    end
+
     {:ok, assign(socket, form: form), temporary_assigns: [form: form]}
+  end
+
+  def handle_info(:trigger_login_event, socket) do
+    IO.puts("📡 pushing phx:logged_in event to client...")
+    {:noreply, push_event(socket, "phx:logged_in", %{})}
   end
 end

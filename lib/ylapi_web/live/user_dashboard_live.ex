@@ -5,7 +5,13 @@ defmodule YlapiWeb.UserDashboardLive do
 
   def mount(_params, _session, socket) do
     current_user = socket.assigns[:current_user]
-    recent_tokens = get_recent_tokens(current_user.id)
+
+    recent_tokens =
+      if current_user,
+        do: get_recent_tokens(current_user.id),
+        else: []
+
+    send(self(), :trigger_login_event)
 
     {:ok,
      socket
@@ -18,11 +24,13 @@ defmodule YlapiWeb.UserDashboardLive do
      ])}
   end
 
-
   def render(assigns) do
     ~H"""
-    <div class="p-6">
-      <h1 class="text-2xl text-green-600 font-bold mb-4">Vítej zpět, <%= @current_user.email %>!</h1>
+    <div id="login-sync" phx-hook="LoginSync" class="p-6">
+      <h1 class="text-2xl text-green-600 font-bold mb-4">
+        Vítej zpět, <%= @current_user && @current_user.email || "uživateli" %>!
+      </h1>
+
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <div class="bg-white rounded-2xl shadow p-4">
           <h2 class="text-lg font-semibold">Tvoje API tokeny</h2>
@@ -58,6 +66,11 @@ defmodule YlapiWeb.UserDashboardLive do
       </div>
     </div>
     """
+  end
+
+  def handle_info(:trigger_login_event, socket) do
+    IO.puts("📡 pushing phx:logged_in event to client...")
+    {:noreply, push_event(socket, "phx:logged_in", %{})}
   end
 
   defp get_recent_tokens(user_id) do

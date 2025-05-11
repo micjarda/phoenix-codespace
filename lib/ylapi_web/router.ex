@@ -22,25 +22,23 @@ defmodule YlapiWeb.Router do
     plug YlapiWeb.AuthPipeline
   end
 
-  scope "/", YlapiWeb do
-    pipe_through :browser
-    get "/", PageController, :home
-  end
-
   # 🔒 AUTHENTICATION ROUTES
-  scope "/", YlapiWeb do
-    pipe_through [:browser, :redirect_if_user_is_authenticated]
+scope "/", YlapiWeb do
+  pipe_through [:browser, :redirect_if_user_is_authenticated]
 
-    live_session :redirect_if_user_is_authenticated,
-      on_mount: [{YlapiWeb.UserAuth, :redirect_if_user_is_authenticated}] do
-      live "/users/register", UserRegistrationLive, :new
-      live "/users/log_in", UserLoginLive, :new
-      live "/users/reset_password", UserForgotPasswordLive, :new
-      live "/users/reset_password/:token", UserResetPasswordLive, :edit
-    end
+  live_session :redirect_if_user_is_authenticated,
+    on_mount: [{YlapiWeb.UserAuth, :redirect_if_user_is_authenticated}] do
 
-    post "/users/log_in", UserSessionController, :create
+    live "/", UserLoginLive
+    live "/users/log_in", UserLoginLive  # 👈 Přidat sem
+    live "/users/register", UserRegistrationLive, :new
+    live "/users/reset_password", UserForgotPasswordLive, :new
+    live "/users/reset_password/:token", UserResetPasswordLive, :edit
   end
+
+  post "/users/log_in", UserSessionController, :create
+end
+
 
   # 🔒 PROTECTED LIVE ROUTES
   scope "/", YlapiWeb do
@@ -48,18 +46,13 @@ defmodule YlapiWeb.Router do
 
     live_session :require_authenticated_user,
       on_mount: [{YlapiWeb.UserAuth, :ensure_authenticated}] do
-
-      # Uživatelský dashboard
       live "/dashboard", DashboardOverviewLive
       live "/dashboard/tokens", TokenDashboardLive
       live "/dashboard/profile", UserDashboardLive
-
-      # Uživatelské nastavení
       live "/users/settings", UserSettingsLive, :edit
       live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
     end
 
-    # Ne-live routy
     get "/dashboard/apps", AppController, :index
     get "/dashboard/apps/:id", AppController, :show
 

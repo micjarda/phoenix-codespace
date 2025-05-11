@@ -25,8 +25,8 @@ defmodule YlapiWeb.UserSessionController do
       user ->
         conn
         |> put_flash(:info, info)
-        |> put_session(:just_logged_in, true) # ✅ pro cross-tab login sync
         |> UserAuth.log_in_user(user, params["user"])
+        |> redirect(to: ~p"/dashboard?just_logged_in=true") # ⬅️ klíčový krok!
     end
   end
 

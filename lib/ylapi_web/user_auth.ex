@@ -85,19 +85,22 @@ defmodule YlapiWeb.UserAuth do
 
   It clears all session data for safety. See renew_session.
   """
-  def log_out_user(conn) do
-    user_token = get_session(conn, :user_token)
-    user_token && Accounts.delete_user_session_token(user_token)
+def log_out_user(conn) do
+  user_token = get_session(conn, :user_token)
+  user_token && Accounts.delete_user_session_token(user_token)
 
-    if live_socket_id = get_session(conn, :live_socket_id) do
-      YlapiWeb.Endpoint.broadcast(live_socket_id, "disconnect", %{})
-    end
-
-    conn
-    |> renew_session()
-    |> delete_resp_cookie(@remember_me_cookie)
-    |> redirect(to: ~p"/")
+  if live_socket_id = get_session(conn, :live_socket_id) do
+    YlapiWeb.Endpoint.broadcast(live_socket_id, "disconnect", %{})
   end
+
+  conn
+  |> renew_session()
+  |> delete_resp_cookie(@remember_me_cookie)
+  |> put_resp_content_type("text/html")
+  |> send_resp(200, """
+  <html><body><script>window.location = "/";</script></body></html>
+  """)
+end
 
   @doc """
   Authenticates the user by looking into the session
@@ -278,5 +281,5 @@ defmodule YlapiWeb.UserAuth do
 
   defp maybe_store_return_to(conn), do: conn
 
-  defp signed_in_path(_conn), do: ~p"/"
+  defp signed_in_path(_conn), do: ~p"/dashboard"
 end
