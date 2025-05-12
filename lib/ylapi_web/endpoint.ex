@@ -19,6 +19,11 @@ defmodule YlapiWeb.Endpoint do
     websocket: [connect_info: [session: @session_options]],
     longpoll: [connect_info: [session: @session_options]]
 
+  # ✅ Přidáno: WebSocket pro login synchronizaci s JWT
+  socket "/login_socket", YlapiWeb.LoginSocket,
+    websocket: true,
+    longpoll: false
+
   plug CORSPlug,
     origin: ["*"], # nebo konkrétní frontend adresu pro větší bezpečnost
     methods: ["GET", "POST", "OPTIONS"]

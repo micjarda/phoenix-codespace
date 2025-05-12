@@ -4,16 +4,23 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
+    <%= if assigns[:user_token] do %>
+      <meta name="user-token" content={assigns[:user_token]} />
+    <% end %>
+
     <.live_title suffix="">
       <%= assigns[:page_title] || "YardaLab" %>
     </.live_title>
     <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}></script>
   </head>
-  <body id="login-sync" phx-hook="LoginSync"
-        data-logged-in={if @current_user, do: "true", else: "false"}
-        data-just-logged-in={Map.get(assigns, :just_logged_in, false)}>
-        
+  <body
+    id="login-sync"
+    phx-hook="LoginSync"
+    data-logged-in={if @current_user, do: "true", else: "false"}
+    data-just-logged-in={Map.get(assigns, :just_logged_in, false)}
+    data-user-id={@current_user && @current_user.id}
+  >
     <%= unless Map.get(assigns, :hide_nav) do %>
       <ul class="relative z-10 flex items-center gap-4 px-4 sm:px-6 lg:px-8 justify-end bg-green-800">
         <%= if @current_user do %>
@@ -26,12 +33,9 @@
             </.link>
           </li>
           <li>
-            <.link method="delete"
-                   href={~p"/users/log_out"}
-                   id="logout-sync-link"
-                   data-phx-hook="LogoutSync">
+            <.link method="delete" href={~p"/users/log_out"} id="logout-sync-link">
               Log out
-            </.link>            
+            </.link>
           </li>
         <% else %>
           <li>

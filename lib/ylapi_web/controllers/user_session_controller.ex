@@ -25,8 +25,9 @@ defmodule YlapiWeb.UserSessionController do
       user ->
         conn
         |> put_flash(:info, info)
+        |> put_flash(:just_logged_in, "true") # ✨ nový flash klíč
         |> UserAuth.log_in_user(user, params["user"])
-        |> redirect(to: ~p"/dashboard?just_logged_in=true") # ⬅️ klíčový krok!
+        |> redirect(to: ~p"/dashboard") # bez query parametru
     end
   end
 

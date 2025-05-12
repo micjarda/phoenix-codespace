@@ -44,8 +44,9 @@ defmodule YlapiWeb.UserAuth do
     |> renew_session()
     |> put_session(:user_id, user.id)
     |> put_token_in_session(token)
+    |> assign(:user_token, token) # ✅ přidáme user_token do assigns
     |> maybe_write_remember_me_cookie(token, params)
-    |> put_resp_cookie("yl-login", "true", max_age: 5) # ✅ přidáme krátkodobou cookie
+    |> put_resp_cookie("yl-login", "true", max_age: 5)
     |> redirect(to: user_return_to || signed_in_path(conn))
   end
 

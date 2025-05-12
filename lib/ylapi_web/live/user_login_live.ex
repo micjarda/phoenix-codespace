@@ -35,13 +35,18 @@ defmodule YlapiWeb.UserLoginLive do
     """
   end
 
-  def mount(_params, _session, socket) do
+  def mount(_params, session, socket) do
     email = Phoenix.Flash.get(socket.assigns.flash, :email)
     form = to_form(%{"email" => email}, as: "user")
 
-    if socket.assigns[:current_user] do
-      send(self(), :trigger_login_event)
-    end
+    socket =
+      if socket.assigns[:current_user] do
+        token = session["user_token"] || ""
+        send(self(), :trigger_login_event)
+        assign(socket, user_token: token)
+      else
+        assign(socket, user_token: nil)
+      end
 
     {:ok, assign(socket, form: form), temporary_assigns: [form: form]}
   end

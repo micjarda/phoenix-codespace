@@ -1,12 +1,11 @@
 defmodule YlapiWeb.DashboardOverviewLive do
   use YlapiWeb, :live_view
   alias Ylapi.Accounts
-
-  def mount(params, _session, socket) do
+  def mount(_params, _session, socket) do
     user_id = socket.assigns.current_user.id
     tokens = Accounts.list_user_api_tokens(user_id)
 
-    just_logged_in = params["just_logged_in"] == "true"
+    just_logged_in = Phoenix.Flash.get(socket.assigns.flash, :just_logged_in) == "true"
 
     socket =
       socket
