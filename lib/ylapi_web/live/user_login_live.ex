@@ -3,7 +3,7 @@ defmodule YlapiWeb.UserLoginLive do
 
   def render(assigns) do
     ~H"""
-    <div id="login-sync" phx-hook="LoginSync" class="mx-auto max-w-sm">
+    <div class="mx-auto max-w-sm">
       <.header class="text-center">
         Log in to account
         <:subtitle>
@@ -15,7 +15,7 @@ defmodule YlapiWeb.UserLoginLive do
         </:subtitle>
       </.header>
 
-      <.simple_form for={@form} id="login_form" action={~p"/users/log_in"} phx-update="ignore">
+      <.simple_form for={@form} id="login_form" action={~p"/users/log_in"}>
         <.input field={@form[:email]} type="email" label="Email" required />
         <.input field={@form[:password]} type="password" label="Password" required />
 
@@ -39,20 +39,19 @@ defmodule YlapiWeb.UserLoginLive do
     email = Phoenix.Flash.get(socket.assigns.flash, :email)
     form = to_form(%{"email" => email}, as: "user")
 
-    socket =
-      if socket.assigns[:current_user] do
-        token = session["user_token"] || ""
-        send(self(), :trigger_login_event)
-        assign(socket, user_token: token)
-      else
-        assign(socket, user_token: nil)
-      end
+    if connected?(socket), do: Phoenix.PubSub.subscribe(Ylapi.PubSub, "login-sync")
 
-    {:ok, assign(socket, form: form), temporary_assigns: [form: form]}
+    socket =
+      assign(socket,
+        form: form,
+        user_token: session["user_token"] || nil
+      )
+
+    {:ok, socket, temporary_assigns: [form: form]}
   end
 
-  def handle_info(:trigger_login_event, socket) do
-    IO.puts("📡 pushing phx:logged_in event to client...")
-    {:noreply, push_event(socket, "phx:logged_in", %{})}
+  def handle_info({:user_logged_in, _token}, socket) do
+    IO.puts("🔁 Přesměrování po přihlášení jiného tabu")
+    {:noreply, push_navigate(socket, to: ~p"/dashboard")}
   end
 end

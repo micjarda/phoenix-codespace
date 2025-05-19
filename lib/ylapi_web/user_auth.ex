@@ -40,6 +40,12 @@ defmodule YlapiWeb.UserAuth do
     token = Accounts.generate_user_session_token(user)
     user_return_to = get_session(conn, :user_return_to)
 
+    Phoenix.PubSub.broadcast(
+      Ylapi.PubSub,
+      "login-sync",
+      {:user_logged_in, token}
+    )
+
     conn
     |> renew_session()
     |> put_session(:user_id, user.id)
